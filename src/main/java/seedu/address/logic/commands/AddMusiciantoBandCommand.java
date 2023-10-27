@@ -29,6 +29,8 @@ public class AddMusiciantoBandCommand extends Command {
 
     public static final String MESSAGE_SUCCESS = "New musician added to band: %1$s";
     public static final String MESSAGE_DUPLICATE_MUSICIAN = "This musician already exists in the band";
+    public static final String MESSAGE_OUT_OF_BOUNDS = "The index of musician is not found in the list below. "
+            + "Do enter the command 'list' and check if the index is in the list!";
 
     private final Index bandToAddInto;
     private final Index musicianToAdd;
@@ -47,14 +49,22 @@ public class AddMusiciantoBandCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
 
-        if (model.hasMusicianInBand(bandToAddInto.getZeroBased(), musicianToAdd.getZeroBased())) {
-            throw new CommandException(MESSAGE_DUPLICATE_MUSICIAN);
+        try {
+            if (model.hasMusicianInBand(bandToAddInto.getZeroBased(), musicianToAdd.getZeroBased())) {
+                throw new CommandException(MESSAGE_DUPLICATE_MUSICIAN);
+            }
+        } catch (IndexOutOfBoundsException e) {
+            throw new CommandException(MESSAGE_OUT_OF_BOUNDS);
         }
-
         List<Band> lastShownBandList = model.getFilteredBandList();
         List<Musician> lastShownMusicianList = model.getFilteredMusicianList();
         Band band = lastShownBandList.get(bandToAddInto.getZeroBased());
-        Musician musician = lastShownMusicianList.get(musicianToAdd.getZeroBased());
+        Musician musician;
+        try {
+            musician = lastShownMusicianList.get(musicianToAdd.getZeroBased());
+        } catch (IndexOutOfBoundsException e) {
+            throw new CommandException(MESSAGE_OUT_OF_BOUNDS);
+        }
         model.addMusicianToBand(bandToAddInto.getZeroBased(), musicianToAdd.getZeroBased());
         return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(band, musician)));
     }
